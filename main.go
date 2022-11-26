@@ -82,6 +82,7 @@ func main() {
 	r.HandleFunc("/signup", users.Create).Methods("POST")
 	r.Handle("/login", users.LoginView).Methods("GET")
 	r.HandleFunc("/login", users.Login).Methods("POST")
+	r.HandleFunc("/cookie", users.CookieTest).Methods("GET")
 	r.HandleFunc("/galleries/new", galleries.New).Methods("GET")
 	r.NotFoundHandler = http.Handler(static.NotFoundView)
 	err = http.ListenAndServe(":3000", r)
