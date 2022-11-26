@@ -65,8 +65,8 @@ func main() {
 		panic(err)
 	}
 	defer us.Close()
-	//us.AutoMigrate()
-	us.DestructiveReset()
+	us.AutoMigrate()
+	//us.DestructiveReset()
 
 	// controllers init
 	users := controllers.NewUsers(us)
