@@ -52,16 +52,17 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	user := models.User{
+	user := &models.User{
 		Name:     form.Name,
 		Email:    form.Email,
 		Password: form.Password,
 	}
 
-	err := u.us.Create(&user)
+	err := u.us.Create(user)
 	if err != nil {
 		panic(err)
 	}
+	signIn(w, user)
 	fmt.Fprintln(w, "User is ", user)
 }
 
@@ -88,12 +89,16 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+	signIn(w, user)
+	fmt.Fprintln(w, user)
+}
+
+func signIn(w http.ResponseWriter, user *models.User) {
 	cookie := http.Cookie{
 		Name:  "email",
-		Value: form.Email,
+		Value: user.Email,
 	}
 	http.SetCookie(w, &cookie)
-	fmt.Fprintln(w, user)
 }
 
 // CookieTest is used to display cookies on the current user
