@@ -63,7 +63,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 	signIn(w, user)
-	fmt.Fprintln(w, "User is ", user)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
 // Login is used to process the login form when a user
@@ -90,7 +90,7 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	signIn(w, user)
-	fmt.Fprintln(w, user)
+	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
 func signIn(w http.ResponseWriter, user *models.User) {
