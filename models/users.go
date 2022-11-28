@@ -164,6 +164,18 @@ func (us *UserService) Update(user *User) error {
 	return us.db.Save(user).Error
 }
 
+// UpdateRememberToken updates remember token in the user object,
+// not touching other attributes to avoid potential race conditions
+func (us *UserService) UpdateRememberToken(user *User) error {
+
+	// Note: we don't handle changing the password yet (set new password hash)
+
+	if user.Remember != "" {
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
+	return us.db.Model(user).Update("remember_hash", us.hmac.Hash(user.Remember)).Error
+}
+
 // Delete deletes a user by id. Actually just sets deleted_at
 // to a non-null value, so the entry is recoverable
 // GORM deletes all data if given 0 as an id, so returning
