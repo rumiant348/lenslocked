@@ -141,6 +141,26 @@ func TestUserService_Authenticate(t *testing.T) {
 	}
 }
 
+func TestUserService_ByRemember(t *testing.T) {
+	err := us.Create(&User{
+		Name:     "do you",
+		Email:    "remember",
+		Password: "turututu",
+		Remember: "remember",
+	})
+	if err != nil {
+		t.Error(err)
+	}
+
+	u, err := us.ByRemember("remember")
+	if err != nil {
+		t.Error(err)
+	}
+	if u.Remember != "" {
+		t.Error("Remember token was saved, but should not be")
+	}
+}
+
 func TestDestruct(t *testing.T) {
 	us.DestructiveReset()
 	defer func(us *UserService) {

@@ -5,6 +5,8 @@ import (
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"golang.org/x/crypto/bcrypt"
+	"lenslocked.com/hash"
+	"lenslocked.com/rand"
 )
 
 var (
@@ -19,6 +21,7 @@ var (
 	ErrInvalidPassword = errors.New("models: incorrect password provided")
 
 	userPwPepper = "secret-secret-secret"
+	key          = "secret-hmac-key"
 )
 
 type User struct {
@@ -27,10 +30,8 @@ type User struct {
 	Email        string `gorm:"not null;unique_index"`
 	Password     string `gorm:"-"`
 	PasswordHash string `gorm:"not null"`
-}
-
-type UserService struct {
-	db *gorm.DB
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
 }
 
 func NewUserService(connectionInfo string) (*UserService, error) {
@@ -39,9 +40,16 @@ func NewUserService(connectionInfo string) (*UserService, error) {
 		return nil, err
 	}
 	db.LogMode(true)
+	hmac := hash.NewHMAC(key)
 	return &UserService{
-		db: db,
+		db:   db,
+		hmac: hmac,
 	}, nil
+}
+
+type UserService struct {
+	db   *gorm.DB
+	hmac hash.HMAC
 }
 
 func (us *UserService) Close() error {
@@ -51,7 +59,6 @@ func (us *UserService) Close() error {
 // Create will create the provided user and back-fill data
 // like the ID, CreatedAt and UpdatedAt fields.
 func (us *UserService) Create(user *User) error {
-
 	hashedBytes, err := bcrypt.GenerateFromPassword(
 		[]byte(user.Password+userPwPepper), bcrypt.DefaultCost)
 	if err != nil {
@@ -60,7 +67,18 @@ func (us *UserService) Create(user *User) error {
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
 
-	return us.db.Create(user).Error
+	if user.Remember == "" {
+		user.Remember, err = rand.RememberToken()
+		if err != nil {
+			return err
+		}
+	}
+	user.RememberHash = us.hmac.Hash(user.Remember)
+	err = us.db.Create(user).Error
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Authenticate can be used to authenticate a user with the
@@ -102,15 +120,21 @@ func (us *UserService) Authenticate(email, password string) (*User, error) {
 // As a general rule, any error but ErrNotFound should
 // probably result in a 500 error.
 func (us *UserService) ByID(id uint) (*User, error) {
-	return getUser(us.db, "id = ?", id)
+	return getUserByCondition(us.db, "id = ?", id)
 }
 
-// ByEmail will look up a user with the provided email
+// ByEmail will look up a user with the provided email.
 func (us *UserService) ByEmail(email string) (*User, error) {
-	return getUser(us.db, "email = ?", email)
+	return getUserByCondition(us.db, "email = ?", email)
 }
 
-func getUser(db *gorm.DB, query string, args ...interface{}) (*User, error) {
+// ByRemember looks up a user with the given remember token
+// and will return that user. The method will handle hashing the token.
+func (us *UserService) ByRemember(token string) (*User, error) {
+	return getUserByCondition(us.db, "remember_hash = ?", us.hmac.Hash(token))
+}
+
+func getUserByCondition(db *gorm.DB, query string, args ...interface{}) (*User, error) {
 	var user User
 	db = db.Where(query, args)
 	if err := first(db, &user); err != nil {
@@ -131,6 +155,12 @@ func first(db *gorm.DB, dst interface{}) error {
 // in the provided user object.
 // if a user with such id absent, creates a new entry
 func (us *UserService) Update(user *User) error {
+
+	// Note: we don't handle changing the password yet (set new password hash)
+
+	if user.Remember != "" {
+		user.RememberHash = us.hmac.Hash(user.Remember)
+	}
 	return us.db.Save(user).Error
 }
 
