@@ -20,9 +20,11 @@ var (
 	// is used when attempting to authenticate a user.
 	ErrInvalidPassword = errors.New("models: incorrect password provided")
 
-	userPwPepper = "secret-secret-secret"
-	key          = "secret-hmac-key"
+	userPwPepper  = "secret-secret-secret"
+	hmacSecretKey = "secret-hmac-hmacSecretKey"
 )
+
+// UserDB interface
 
 // UserDB is used to interact with the users database
 //
@@ -55,6 +57,8 @@ type UserDB interface {
 	DestructiveReset() error
 }
 
+// UserService interface
+
 // UserService is a set of methods to manipulate and
 // work with the user model
 type UserService interface {
@@ -68,9 +72,27 @@ type UserService interface {
 	UserDB
 }
 
+// UserService implementation
+
 type userService struct {
 	UserDB
 }
+
+func NewUserService(connectionInfo string) (UserService, error) {
+	ug, err := newUserGorm(connectionInfo)
+	if err != nil {
+		return nil, err
+	}
+	hmac := hash.NewHMAC(hmacSecretKey)
+	return &userService{
+		UserDB: &userValidator{
+			UserDB: ug,
+			hmac:   hmac,
+		},
+	}, nil
+}
+
+var _ UserService = &userService{}
 
 // Authenticate can be used to authenticate a user with the
 // provided email and password.
@@ -101,83 +123,107 @@ func (us *userService) Authenticate(email, password string) (*User, error) {
 	}
 }
 
-func NewUserService(connectionInfo string) (UserService, error) {
-	ug, err := newUserGorm(connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-	return &userService{
-		UserDB: userValidator{
-			UserDB: ug,
-		},
-	}, nil
-}
-
-var _ UserService = &userService{}
-
-// userGorm represents our database integration layer
-// and implements UserDB interface fully.
-type userGorm struct {
-	db   *gorm.DB
-	hmac hash.HMAC
-}
-
-// let's check that we actually implement an interface. Hurray to implicit interfaces realization!)
-var _ UserDB = &userGorm{}
-
-type User struct {
-	gorm.Model
-	Name         string
-	Email        string `gorm:"not null;unique_index"`
-	Password     string `gorm:"-"`
-	PasswordHash string `gorm:"not null"`
-	Remember     string `gorm:"-"`
-	RememberHash string `gorm:"not null;unique_index"`
-}
-
-func newUserGorm(connectionInfo string) (*userGorm, error) {
-	db, err := gorm.Open("postgres", connectionInfo)
-	if err != nil {
-		return nil, err
-	}
-	db.LogMode(true)
-	hmac := hash.NewHMAC(key)
-	return &userGorm{
-		db:   db,
-		hmac: hmac,
-	}, nil
-}
+// Validator
 
 // userValidator is our validation layer that validates
 // and normalizes data before passing it on to the next
 // UserDB in our interface chain
 type userValidator struct {
 	UserDB
+	hmac hash.HMAC
+}
+
+type userValFn func(*User) error
+
+func runUserValFns(user *User, fns ...userValFn) error {
+	for _, fn := range fns {
+		if err := fn(user); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ByRemember looks up a user with the given remember token
+// and will return that user. The method will handle hashing the token.
+func (uv *userValidator) ByRemember(token string) (*User, error) {
+	hashedToken := uv.hmac.Hash(token)
+	return uv.UserDB.ByRemember(hashedToken)
 }
 
 // Create will create the provided user and back-fill data
-// like the ID, CreatedAt and UpdatedAt fields.
-func (ug *userGorm) Create(user *User) error {
-	hashedBytes, err := bcrypt.GenerateFromPassword(
-		[]byte(user.Password+userPwPepper), bcrypt.DefaultCost)
+// like the ID, CreatedAt and UpdatedAt fields,
+func (uv *userValidator) Create(user *User) error {
+	if err := runUserValFns(user, uv.bcryptPassword); err != nil {
+		return err
+	}
+	if user.Remember == "" {
+		token, err := rand.RememberToken()
+		if err != nil {
+			return err
+		}
+		user.Remember = token
+	}
+	user.RememberHash = uv.hmac.Hash(user.Remember)
+	return uv.UserDB.Create(user)
+}
+
+// Update will hash a remember token if it is provided
+func (uv *userValidator) Update(user *User) error {
+	if err := runUserValFns(user, uv.bcryptPassword); err != nil {
+		return err
+	}
+
+	if user.Remember != "" {
+		user.RememberHash = uv.hmac.Hash(user.Remember)
+	}
+	return uv.UserDB.Update(user)
+}
+
+// bcryptPassword will hash a user's password with an
+// app-wide pepper and bcrypt, which salts for us.
+func (uv *userValidator) bcryptPassword(user *User) error {
+	if user.Password == "" {
+		return nil
+	}
+	pwBytes := []byte(user.Password + userPwPepper)
+	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
 	user.PasswordHash = string(hashedBytes)
 	user.Password = ""
-
-	if user.Remember == "" {
-		user.Remember, err = rand.RememberToken()
-		if err != nil {
-			return err
-		}
-	}
-	user.RememberHash = ug.hmac.Hash(user.Remember)
-	err = ug.db.Create(user).Error
-	if err != nil {
-		return err
-	}
 	return nil
+}
+
+// UserGorm
+
+// userGorm represents our database integration layer
+// and implements UserDB interface fully.
+type userGorm struct {
+	db *gorm.DB
+}
+
+// let's check that we actually implement an interface. Hurray to implicit interfaces realization!)
+var _ UserDB = &userGorm{}
+
+func newUserGorm(connectionInfo string) (*userGorm, error) {
+	db, err := gorm.Open("postgres", connectionInfo)
+
+	_ = db.DB().Ping()
+
+	if err != nil {
+		return nil, err
+	}
+	db.LogMode(true)
+	return &userGorm{
+		db: db,
+	}, nil
+}
+
+// Create will create the provided user in the database
+func (ug *userGorm) Create(user *User) error {
+	return ug.db.Create(user).Error
 }
 
 // ByID will look up a user with the provided ID.
@@ -199,9 +245,10 @@ func (ug *userGorm) ByEmail(email string) (*User, error) {
 }
 
 // ByRemember looks up a user with the given remember token
-// and will return that user. The method will handle hashing the token.
+// and will return that user. The method expects the remember
+// token to be already hashed
 func (ug *userGorm) ByRemember(token string) (*User, error) {
-	return getUserByCondition(ug.db, "remember_hash = ?", ug.hmac.Hash(token))
+	return getUserByCondition(ug.db, "remember_hash = ?", token)
 }
 
 func getUserByCondition(db *gorm.DB, query string, args ...interface{}) (*User, error) {
@@ -225,39 +272,39 @@ func first(db *gorm.DB, dst interface{}) error {
 // in the provided user object.
 // if a user with such id absent, creates a new entry
 func (ug *userGorm) Update(user *User) error {
-
-	// Note: we don't handle changing the password yet (set new password hash)
-
-	if user.Remember != "" {
-		user.RememberHash = ug.hmac.Hash(user.Remember)
-	}
 	return ug.db.Save(user).Error
 }
 
-// UpdateRememberToken updates remember token in the user object,
-// not touching other attributes to avoid potential race conditions
-func (ug *userGorm) UpdateRememberToken(user *User) error {
-
-	// Note: we don't handle changing the password yet (set new password hash)
-
-	if user.Remember != "" {
-		user.RememberHash = ug.hmac.Hash(user.Remember)
-	}
-	return ug.db.Model(user).Update("remember_hash", ug.hmac.Hash(user.Remember)).Error
-}
+// not sure if worth doing now
+//// UpdateRememberToken updates remember token in the user object,
+//// not touching other attributes to avoid potential race conditions
+//func (ug *userGorm) UpdateRememberToken(user *User) error {
+//
+//	// Note: we don't handle changing the password yet (set new password hash)
+//
+//	if user.Remember != "" {
+//		user.RememberHash = ug.hmac.Hash(user.Remember)
+//	}
+//	return ug.db.Model(user).Update("remember_hash", ug.hmac.Hash(user.Remember)).Error
+//}
 
 // Delete deletes a user by id. Actually just sets deleted_at
 // to a non-null value, so the entry is recoverable
-// GORM deletes all data if given 0 as an id, so returning
-// an ErrInvalidID for id == 0
 func (ug *userGorm) Delete(id uint) error {
-	if id == 0 {
-		return ErrInvalidID
-	}
 	user := User{
 		Model: gorm.Model{ID: id},
 	}
 	return ug.db.Delete(&user).Error
+}
+
+// Delete deletes a user by id.
+// GORM deletes all data if given 0 as an id, so returning
+// an ErrInvalidID for id == 0
+func (uv *userValidator) Delete(id uint) error {
+	if id == 0 {
+		return ErrInvalidID
+	}
+	return uv.UserDB.Delete(id)
 }
 
 func (ug *userGorm) Close() error {
@@ -280,4 +327,15 @@ func (ug *userGorm) DestructiveReset() error {
 		return err
 	}
 	return ug.AutoMigrate()
+}
+
+// User type
+type User struct {
+	gorm.Model
+	Name         string
+	Email        string `gorm:"not null;unique_index"`
+	Password     string `gorm:"-"`
+	PasswordHash string `gorm:"not null"`
+	Remember     string `gorm:"-"`
+	RememberHash string `gorm:"not null;unique_index"`
 }

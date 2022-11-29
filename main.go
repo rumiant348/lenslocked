@@ -4,47 +4,10 @@ import (
 	"fmt"
 	"lenslocked.com/controllers"
 	"lenslocked.com/models"
-	"lenslocked.com/views"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
-
-var (
-	homeView     *views.View
-	contactView  *views.View
-	notFoundView *views.View
-	faqView      *views.View
-)
-
-func home(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	must(homeView.Render(w, nil))
-
-}
-
-func contact(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	must(contactView.Render(w, nil))
-}
-
-func faq(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	must(faqView.Render(w, nil))
-}
-
-func notFound(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html")
-	w.WriteHeader(http.StatusNotFound)
-	must(notFoundView.Render(w, nil))
-}
-
-// A helper function that panics on any error
-func must(err error) {
-	if err != nil {
-		panic(err)
-	}
-}
 
 const (
 	host     = "localhost"
@@ -57,8 +20,8 @@ const (
 func main() {
 	// db init
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, port, userName, password, dbname)
+		"dbname=%s sslmode=disable password=%s",
+		host, port, userName, dbname, password)
 
 	us, err := models.NewUserService(psqlInfo)
 	if err != nil {

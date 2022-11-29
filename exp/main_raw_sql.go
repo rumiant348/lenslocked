@@ -1,9 +1,11 @@
 package main
 
-import (
-	_ "github.com/lib/pq"
-)
-
+//
+//import (
+//	"database/sql"
+//	"fmt"
+//	_ "github.com/lib/pq"
+//)
 //
 //const (
 //	host     = "localhost"
@@ -15,9 +17,10 @@ import (
 //
 //var db *sql.DB
 //
-//func main_raw_sql() {
+//func main() {
+//
 //	defer tearDown()
-//	dropTables()
+//	createTables()
 //}
 //
 //func dropTables() {
@@ -34,9 +37,9 @@ import (
 //func createTables() {
 //	_, err := db.Exec(`
 //	CREATE TABLE users (
-//  id SERIAL PRIMARY KEY,
-//  name TEXT,
-//  email TEXT NOT NULL
+// id SERIAL PRIMARY KEY,
+// name TEXT,
+// email TEXT NOT NULL
 //)`)
 //	if err != nil {
 //		panic(err)
@@ -44,10 +47,10 @@ import (
 //
 //	_, err = db.Exec(`
 //	CREATE TABLE orders (
-//  id SERIAL PRIMARY KEY,
-//  user_id INT NOT NULL,
-//  amount INT,
-//  description TEXT
+// id SERIAL PRIMARY KEY,
+// user_id INT NOT NULL,
+// amount INT,
+// description TEXT
 //)`)
 //	if err != nil {
 //		panic(err)
@@ -66,9 +69,9 @@ import (
 //		description := fmt.Sprintf("USB-C Adapter x%d", i)
 //
 //		err := db.QueryRow(`
-//      		INSERT INTO orders (user_id, amount, description)
-//    		VALUES ($1, $2, $3)
-//     		RETURNING id`,
+//     		INSERT INTO orders (user_id, amount, description)
+//   		VALUES ($1, $2, $3)
+//    		RETURNING id`,
 //			userId, amount, description).Scan(&id)
 //		if err != nil {
 //			panic(err)
@@ -114,10 +117,10 @@ import (
 //	description string
 //}
 //
-//func initR() {
+//func init() {
 //	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-//		"password=%s dbname=%s sslmode=disable",
-//		host, port, userName, password, dbname)
+//		"dbname=%s sslmode=disable password=%s ",
+//		host, port, userName, dbname, password)
 //
 //	var err error
 //	db, err = sql.Open("postgres", psqlInfo)
@@ -144,8 +147,8 @@ import (
 //func insertRow(name, email string) int {
 //	var id int
 //	row := db.QueryRow(`
-//  	INSERT INTO users(name, email)
-//  	VALUES($1, $2) RETURNING id`,
+// 	INSERT INTO users(name, email)
+// 	VALUES($1, $2) RETURNING id`,
 //		name, email)
 //	err := row.Scan(&id)
 //	if err != nil {

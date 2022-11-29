@@ -17,8 +17,8 @@ var us UserService
 
 func init() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"password=%s dbname=%s sslmode=disable",
-		host, port, userName, password, dbname)
+		"dbname=%s sslmode=disable password=%s",
+		host, port, userName, dbname, password)
 
 	var err error
 	us, err = NewUserService(psqlInfo)
