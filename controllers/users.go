@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func NewUsers(us *models.UserService) *Users {
+func NewUsers(us models.UserService) *Users {
 	return &Users{
 		NewView:   views.NewView("bootstrap", "users/new"),
 		LoginView: views.NewView("bootstrap", "users/login"),
@@ -19,7 +19,7 @@ func NewUsers(us *models.UserService) *Users {
 type Users struct {
 	NewView   *views.View
 	LoginView *views.View
-	us        *models.UserService
+	us        models.UserService
 }
 
 type SignupForm struct {
@@ -109,7 +109,7 @@ func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
 			return err
 		}
 		user.Remember = token
-		err = u.us.UpdateRememberToken(user)
+		err = u.us.Update(user)
 	}
 
 	cookie := http.Cookie{
