@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"fmt"
-	"lenslocked.com/models"
+	"lenslocked.com/models/users"
 	"lenslocked.com/rand"
 	"lenslocked.com/views"
 	"net/http"
 )
 
-func NewUsers(us models.UserService) *Users {
+func NewUsers(us users.UserService) *Users {
 	return &Users{
 		NewView:   views.NewView("bootstrap", "users/new"),
 		LoginView: views.NewView("bootstrap", "users/login"),
@@ -19,7 +19,7 @@ func NewUsers(us models.UserService) *Users {
 type Users struct {
 	NewView   *views.View
 	LoginView *views.View
-	us        models.UserService
+	us        users.UserService
 }
 
 type SignupForm struct {
@@ -53,7 +53,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	user := &models.User{
+	user := &users.User{
 		Name:     form.Name,
 		Email:    form.Email,
 		Password: form.Password,
@@ -86,9 +86,9 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	user, err := u.us.Authenticate(form.Email, form.Password)
 	if err != nil {
 		switch err {
-		case models.ErrNotFound:
+		case users.ErrNotFound:
 			fmt.Fprintln(w, "Invalid email address.")
-		case models.ErrPasswordIncorrect:
+		case users.ErrPasswordIncorrect:
 			fmt.Fprintln(w, "Invalid password provided.")
 		default:
 			http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -103,7 +103,7 @@ func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
 }
 
-func (u *Users) signIn(w http.ResponseWriter, user *models.User) error {
+func (u *Users) signIn(w http.ResponseWriter, user *users.User) error {
 	if user.Remember == "" {
 		token, err := rand.RememberToken()
 		if err != nil {
