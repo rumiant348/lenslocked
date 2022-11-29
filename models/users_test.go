@@ -13,7 +13,7 @@ const (
 	dbname   = "lenslocked_test"
 )
 
-var us *userService
+var us UserService
 
 func init() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
@@ -162,11 +162,8 @@ func TestUserService_ByRemember(t *testing.T) {
 }
 
 func TestDestruct(t *testing.T) {
-	us.DestructiveReset()
-	defer func(us *userService) {
-		err := us.Close()
-		if err != nil {
-			panic(err)
-		}
-	}(us)
+	err := us.DestructiveReset()
+	if err != nil {
+		t.Error(err)
+	}
 }
