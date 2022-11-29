@@ -31,18 +31,21 @@ func init() {
 func TestUserModel(t *testing.T) {
 
 	user := User{
-		Name:  "anton",
-		Email: "rum@ya.ru",
+		Name:     "anton",
+		Email:    "rum@ya.ru",
+		Password: "qwerty123",
 	}
 
 	us.Create(&User{
-		Name:  "kek",
-		Email: "kek@cheburek.com",
+		Name:     "kek",
+		Email:    "kek@cheburek.com",
+		Password: "qwerty123",
 	})
 
 	us.Create(&User{
-		Name:  "cheburek",
-		Email: "test@lol.com",
+		Name:     "cheburek",
+		Email:    "test@lol.com",
+		Password: "qwerty123",
 	})
 
 	// Create a user
@@ -76,8 +79,9 @@ func TestUserModel(t *testing.T) {
 func TestUpdate(t *testing.T) {
 
 	user := User{
-		Name:  "user for update",
-		Email: "user@user.com",
+		Name:     "user for update",
+		Email:    "user@user.com",
+		Password: "qwerty123",
 	}
 
 	err := us.Create(&user)
@@ -108,8 +112,9 @@ func TestUpdate(t *testing.T) {
 
 func TestDelete(t *testing.T) {
 	user := User{
-		Name:  "delete",
-		Email: "delete",
+		Name:     "delete",
+		Email:    "delete@delete.com",
+		Password: "qwerty123",
 	}
 	err := us.Create(&user)
 	if err != nil {
@@ -128,14 +133,14 @@ func TestDelete(t *testing.T) {
 func TestUserService_Authenticate(t *testing.T) {
 	err := us.Create(&User{
 		Name:     "name_auth",
-		Email:    "email_auth",
-		Password: "auth",
+		Email:    "email@auth.com",
+		Password: "authauthauth",
 	})
 	if err != nil {
 		t.Error(err)
 	}
 
-	_, err = us.Authenticate("email_auth", "auth")
+	_, err = us.Authenticate("email@auth.com", "authauthauth")
 	if err != nil {
 		t.Error(err)
 	}
@@ -144,15 +149,15 @@ func TestUserService_Authenticate(t *testing.T) {
 func TestUserService_ByRemember(t *testing.T) {
 	err := us.Create(&User{
 		Name:     "do you",
-		Email:    "remember",
+		Email:    "remember@remember.com",
 		Password: "turututu",
-		Remember: "remember",
+		Remember: "rememberrememberrememberrememberrememberrememberrememberrememberremember",
 	})
 	if err != nil {
 		t.Error(err)
 	}
 
-	u, err := us.ByRemember("remember")
+	u, err := us.ByRemember("rememberrememberrememberrememberrememberrememberrememberrememberremember")
 	if err != nil {
 		t.Error(err)
 	}
