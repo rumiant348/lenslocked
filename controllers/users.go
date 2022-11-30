@@ -48,9 +48,12 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 //
 // POST /signup
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	var form SignupForm
 	if err := ParseForm(r, &form); err != nil {
-		panic(err)
+		vd.SetAlert(err)
+		u.NewView.Render(w, vd)
+		return
 	}
 
 	user := &users.User{
@@ -61,12 +64,13 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 
 	err := u.us.Create(user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		vd.SetAlert(err)
+		u.NewView.Render(w, vd)
 		return
 	}
 	err = u.signIn(w, user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Redirect(w, r, "/login", http.StatusFound)
 		return
 	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)
@@ -77,27 +81,28 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 //
 // POST /login
 func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
+	var vd views.Data
 	form := LoginForm{}
-
 	if err := ParseForm(r, &form); err != nil {
-		panic(err)
+		vd.SetAlert(err)
+		u.LoginView.Render(w, vd)
+		return
 	}
-
 	user, err := u.us.Authenticate(form.Email, form.Password)
 	if err != nil {
 		switch err {
 		case users.ErrNotFound:
-			fmt.Fprintln(w, "Invalid email address.")
-		case users.ErrPasswordIncorrect:
-			fmt.Fprintln(w, "Invalid password provided.")
+			vd.AlertError("No user exists with that email address")
 		default:
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			vd.SetAlert(err)
 		}
+		u.LoginView.Render(w, vd)
 		return
 	}
 	err = u.signIn(w, user)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		vd.SetAlert(err)
+		u.LoginView.Render(w, vd)
 		return
 	}
 	http.Redirect(w, r, "/cookietest", http.StatusFound)

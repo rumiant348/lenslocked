@@ -10,10 +10,13 @@
     {{template "navbar"}}
 
     <div class="container-fluid">
-        {{template "yield" .}}
+        {{if .Alert}}
+            {{template "alert" .Alert}}
+        {{end}}
+        {{template "yield" .Yield}}
+        {{template "footer"}}
     </div>
 
-    {{ template "footer" }}
     <!-- jquery & Bootstrap JS -->
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js">
     </script>
