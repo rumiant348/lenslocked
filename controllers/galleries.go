@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"fmt"
+	"github.com/gorilla/mux"
 	"lenslocked.com/context"
 	"lenslocked.com/models"
 	"lenslocked.com/views"
 	"net/http"
+	"strconv"
 )
 
 func NewGalleries(gs models.GalleryService) *Galleries {
@@ -54,4 +56,22 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	fmt.Fprintln(w, gallery)
+}
+
+func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid gallery ID", http.StatusNotFound)
+		return
+	}
+	_ = id
+	// tmp gallery until the search is not implemented
+	gallery := models.Gallery{
+		Title: "A temporary fake gallery with id: " + idStr,
+	}
+	var vd views.Data
+	vd.Yield = gallery
+	g.ShowView.Render(w, vd)
 }
