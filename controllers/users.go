@@ -48,7 +48,7 @@ func (u *Users) New(w http.ResponseWriter, r *http.Request) {
 func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 	var vd views.Data
 	var form SignupForm
-	if err := ParseForm(r, &form); err != nil {
+	if err := parseForm(r, &form); err != nil {
 		vd.SetAlert(err)
 		u.NewView.Render(w, vd)
 		return
@@ -81,7 +81,7 @@ func (u *Users) Create(w http.ResponseWriter, r *http.Request) {
 func (u *Users) Login(w http.ResponseWriter, r *http.Request) {
 	var vd views.Data
 	form := LoginForm{}
-	if err := ParseForm(r, &form); err != nil {
+	if err := parseForm(r, &form); err != nil {
 		vd.SetAlert(err)
 		u.LoginView.Render(w, vd)
 		return

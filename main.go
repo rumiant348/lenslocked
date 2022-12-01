@@ -35,7 +35,7 @@ func main() {
 	// controllers init
 	usersC := controllers.NewUsers(services.User)
 	staticC := controllers.NewStatic()
-	galleriesC := controllers.NewGalleries()
+	galleriesC := controllers.NewGalleries(services.Gallery)
 
 	// routes init
 	r := mux.NewRouter()
@@ -47,7 +47,8 @@ func main() {
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
-	r.HandleFunc("/galleriesC/new", galleriesC.New).Methods("GET")
+	r.Handle("/galleries/new", galleriesC.NewView).Methods("GET")
+	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
 	r.NotFoundHandler = http.Handler(staticC.NotFoundView)
 	err = http.ListenAndServe(":3000", r)
 	if err != nil {
