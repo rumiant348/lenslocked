@@ -55,7 +55,7 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 		g.NewView.Render(w, vd)
 		return
 	}
-	fmt.Fprintln(w, gallery)
+	fmt.Fprintf(w, "%+v", gallery)
 }
 
 func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
@@ -66,11 +66,18 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid gallery ID", http.StatusNotFound)
 		return
 	}
-	_ = id
-	// tmp gallery until the search is not implemented
-	gallery := models.Gallery{
-		Title: "A temporary fake gallery with id: " + idStr,
+
+	gallery, err := g.gs.ByID(uint(id))
+	if err != nil {
+		switch err {
+		case models.ErrNotFound:
+			http.Error(w, "Gallery not found", http.StatusNotFound)
+		default:
+			http.Error(w, "Something went wrong", http.StatusInternalServerError)
+		}
+		return
 	}
+
 	var vd views.Data
 	vd.Yield = gallery
 	g.ShowView.Render(w, vd)
