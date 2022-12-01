@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"lenslocked.com/context"
 	"lenslocked.com/models"
@@ -10,11 +9,16 @@ import (
 	"strconv"
 )
 
-func NewGalleries(gs models.GalleryService) *Galleries {
+const (
+	ShowGallery = "show_gallery"
+)
+
+func NewGalleries(gs models.GalleryService, r *mux.Router) *Galleries {
 	return &Galleries{
 		NewView:  views.NewView("bootstrap", "galleries/new"),
 		ShowView: views.NewView("bootstrap", "galleries/show"),
 		gs:       gs,
+		r:        r,
 	}
 }
 
@@ -22,6 +26,7 @@ type Galleries struct {
 	NewView  *views.View
 	ShowView *views.View
 	gs       models.GalleryService
+	r        *mux.Router
 }
 
 type GalleryForm struct {
@@ -55,7 +60,13 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 		g.NewView.Render(w, vd)
 		return
 	}
-	fmt.Fprintf(w, "%+v", gallery)
+	url, err := g.r.Get(ShowGallery).URL("id",
+		strconv.Itoa(int(gallery.ID)))
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+		return
+	}
+	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
 func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {

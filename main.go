@@ -33,10 +33,13 @@ func main() {
 	services.AutoMigrate()
 	//services.DestructiveReset()
 
+	// router init
+	r := mux.NewRouter()
+
 	// controllers init
 	usersC := controllers.NewUsers(services.User)
 	staticC := controllers.NewStatic()
-	galleriesC := controllers.NewGalleries(services.Gallery)
+	galleriesC := controllers.NewGalleries(services.Gallery, r)
 
 	// logging middleware?
 	logging := middleware.LogRequest{}
@@ -49,8 +52,6 @@ func main() {
 	newGallery := requireUserMw.Apply(galleriesC.NewView)
 	createGallery := requireUserMw.ApplyFn(galleriesC.Create)
 
-	// routes init
-	r := mux.NewRouter()
 	// Static routes
 	r.Handle("/", logging.Apply(staticC.Home)).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
@@ -64,7 +65,8 @@ func main() {
 	// Gallery routes
 	r.Handle("/galleries/new", newGallery).Methods("GET")
 	r.HandleFunc("/galleries", createGallery).Methods("POST")
-	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesC.Show).Methods("GET")
+	r.HandleFunc("/galleries/{id:[0-9]+}", galleriesC.Show).
+		Methods("GET").Name(controllers.ShowGallery)
 	r.NotFoundHandler = http.Handler(staticC.NotFoundView)
 	err = http.ListenAndServe(":3000", r)
 	if err != nil {
