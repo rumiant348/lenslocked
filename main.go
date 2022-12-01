@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"lenslocked.com/controllers"
+	"lenslocked.com/middleware"
 	"lenslocked.com/models"
 	"net/http"
 
@@ -37,6 +38,17 @@ func main() {
 	staticC := controllers.NewStatic()
 	galleriesC := controllers.NewGalleries(services.Gallery)
 
+	// logging middleware?
+
+	// cors middleware?
+
+	// auth middleware
+	requireUserMw := middleware.RequireUser{
+		UserService: services.User,
+	}
+	newGallery := requireUserMw.Apply(galleriesC.NewView)
+	createGallery := requireUserMw.ApplyFn(galleriesC.Create)
+
 	// routes init
 	r := mux.NewRouter()
 	r.Handle("/", staticC.Home).Methods("GET")
@@ -47,8 +59,8 @@ func main() {
 	r.Handle("/login", usersC.LoginView).Methods("GET")
 	r.HandleFunc("/login", usersC.Login).Methods("POST")
 	r.HandleFunc("/cookietest", usersC.CookieTest).Methods("GET")
-	r.Handle("/galleries/new", galleriesC.NewView).Methods("GET")
-	r.HandleFunc("/galleries", galleriesC.Create).Methods("POST")
+	r.Handle("/galleries/new", newGallery).Methods("GET")
+	r.HandleFunc("/galleries", createGallery).Methods("POST")
 	r.NotFoundHandler = http.Handler(staticC.NotFoundView)
 	err = http.ListenAndServe(":3000", r)
 	if err != nil {
