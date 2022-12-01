@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"lenslocked.com/controllers"
-	"lenslocked.com/models/users"
+	"lenslocked.com/models"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -23,7 +23,7 @@ func main() {
 		"dbname=%s sslmode=disable password=%s",
 		host, port, userName, dbname, password)
 
-	us, err := users.NewUserService(psqlInfo)
+	us, err := models.NewUserService(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
