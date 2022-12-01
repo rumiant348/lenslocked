@@ -8,19 +8,12 @@ type Gallery struct {
 	Title  string `gorm:"not_null"`
 }
 
-type GalleryDB interface {
-	Create(gallery *Gallery) error
-}
-
-type GalleryService interface {
-	GalleryDB
-}
-
 type galleryGorm struct {
 	db *gorm.DB
 }
 
+var _ GalleryDB = &galleryGorm{}
+
 func (gg *galleryGorm) Create(gallery *Gallery) error {
-	// TODO: implement this later
-	return nil
+	return gg.db.Create(gallery).Error
 }
