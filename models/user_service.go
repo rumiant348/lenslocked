@@ -1,6 +1,7 @@
 package models
 
 import (
+	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"lenslocked.com/hash"
 )
@@ -26,18 +27,13 @@ type userService struct {
 	UserDB
 }
 
-func NewUserService(connectionInfo string) (UserService, error) {
-	ug, err := newUserGorm(connectionInfo)
-	if err != nil {
-		return nil, err
-	}
+func NewUserService(db *gorm.DB) UserService {
+	ug := &userGorm{db}
 	hmac := hash.NewHMAC(hmacSecretKey)
+	uv := newUserValidator(ug, hmac)
 	return &userService{
-		UserDB: newUserValidator(
-			ug,
-			hmac,
-		),
-	}, nil
+		UserDB: uv,
+	}
 }
 
 var _ UserService = &userService{}

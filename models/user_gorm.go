@@ -16,20 +16,6 @@ type userGorm struct {
 // let's check that we actually implement an interface. Hurray to implicit interfaces realization!)
 var _ UserDB = &userGorm{}
 
-func newUserGorm(connectionInfo string) (*userGorm, error) {
-	db, err := gorm.Open("postgres", connectionInfo)
-
-	_ = db.DB().Ping()
-
-	if err != nil {
-		return nil, err
-	}
-	db.LogMode(true)
-	return &userGorm{
-		db: db,
-	}, nil
-}
-
 // Create will create the provided user in the database
 func (ug *userGorm) Create(user *User) error {
 	return ug.db.Create(user).Error
@@ -104,26 +90,4 @@ func (ug *userGorm) Delete(id uint) error {
 		Model: gorm.Model{ID: id},
 	}
 	return ug.db.Delete(&user).Error
-}
-
-func (ug *userGorm) Close() error {
-	return ug.db.Close()
-}
-
-// AutoMigrate will automatically migrate the
-// users table
-func (ug *userGorm) AutoMigrate() error {
-	if err := ug.db.AutoMigrate(&User{}).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
-// DestructiveReset drops the user table and resets it
-func (ug *userGorm) DestructiveReset() error {
-	err := ug.db.DropTableIfExists(&User{}).Error
-	if err != nil {
-		return err
-	}
-	return ug.AutoMigrate()
 }

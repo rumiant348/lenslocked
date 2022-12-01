@@ -14,6 +14,7 @@ const (
 )
 
 var us UserService
+var s *Services
 
 func init() {
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
@@ -21,11 +22,12 @@ func init() {
 		host, port, userName, dbname, password)
 
 	var err error
-	us, err = NewUserService(psqlInfo)
+	s, err = NewServices(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	us.DestructiveReset()
+	us = s.User
+	s.DestructiveReset()
 }
 
 func TestUserModel(t *testing.T) {
@@ -167,7 +169,7 @@ func TestUserService_ByRemember(t *testing.T) {
 }
 
 func TestDestruct(t *testing.T) {
-	err := us.DestructiveReset()
+	err := s.DestructiveReset()
 	if err != nil {
 		t.Error(err)
 	}

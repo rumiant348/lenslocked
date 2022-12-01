@@ -24,11 +24,4 @@ type UserDB interface {
 	Create(user *User) error
 	Update(user *User) error
 	Delete(id uint) error
-
-	// Close is used to close db connection
-	Close() error
-
-	// AutoMigrate and Destructive reset are migration methods
-	AutoMigrate() error
-	DestructiveReset() error
 }

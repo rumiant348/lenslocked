@@ -23,16 +23,17 @@ func main() {
 		"dbname=%s sslmode=disable password=%s",
 		host, port, userName, dbname, password)
 
-	us, err := models.NewUserService(psqlInfo)
+	//us, err := models.NewUserService(psqlInfo)
+	services, err := models.NewServices(psqlInfo)
 	if err != nil {
 		panic(err)
 	}
-	defer us.Close()
-	us.AutoMigrate()
-	//us.DestructiveReset()
+	defer services.Close()
+	services.AutoMigrate()
+	//services.DestructiveReset()
 
 	// controllers init
-	usersC := controllers.NewUsers(us)
+	usersC := controllers.NewUsers(services.User)
 	staticC := controllers.NewStatic()
 	galleriesC := controllers.NewGalleries()
 
