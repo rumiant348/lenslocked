@@ -10,14 +10,16 @@ import (
 
 func NewGalleries(gs models.GalleryService) *Galleries {
 	return &Galleries{
-		NewView: views.NewView("bootstrap", "galleries/new"),
-		gs:      gs,
+		NewView:  views.NewView("bootstrap", "galleries/new"),
+		ShowView: views.NewView("bootstrap", "galleries/show"),
+		gs:       gs,
 	}
 }
 
 type Galleries struct {
-	NewView *views.View
-	gs      models.GalleryService
+	NewView  *views.View
+	ShowView *views.View
+	gs       models.GalleryService
 }
 
 type GalleryForm struct {
