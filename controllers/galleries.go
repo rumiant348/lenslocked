@@ -16,8 +16,5 @@ type Galleries struct {
 }
 
 func (g *Galleries) New(w http.ResponseWriter, r *http.Request) {
-	err := g.NewView.Render(w, nil)
-	if err != nil {
-		panic(err)
-	}
+	g.NewView.Render(w, nil)
 }
