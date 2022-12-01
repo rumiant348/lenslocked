@@ -39,7 +39,7 @@ func main() {
 	galleriesC := controllers.NewGalleries(services.Gallery)
 
 	// logging middleware?
-
+	logging := middleware.LogRequest{}
 	// cors middleware?
 
 	// auth middleware
@@ -51,7 +51,7 @@ func main() {
 
 	// routes init
 	r := mux.NewRouter()
-	r.Handle("/", staticC.Home).Methods("GET")
+	r.Handle("/", logging.Apply(staticC.Home)).Methods("GET")
 	r.Handle("/contact", staticC.Contact).Methods("GET")
 	r.Handle("/faq", staticC.Faq).Methods("GET")
 	r.HandleFunc("/signup", usersC.New).Methods("GET")
