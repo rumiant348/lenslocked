@@ -17,6 +17,7 @@ func NewGalleries(gs models.GalleryService, r *mux.Router) *Galleries {
 	return &Galleries{
 		NewView:  views.NewView("bootstrap", "galleries/new"),
 		ShowView: views.NewView("bootstrap", "galleries/show"),
+		EditView: views.NewView("bootstrap", "galleries/edit"),
 		gs:       gs,
 		r:        r,
 	}
@@ -25,6 +26,7 @@ func NewGalleries(gs models.GalleryService, r *mux.Router) *Galleries {
 type Galleries struct {
 	NewView  *views.View
 	ShowView *views.View
+	EditView *views.View
 	gs       models.GalleryService
 	r        *mux.Router
 }
@@ -69,15 +71,14 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
-func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
+func (g *Galleries) galleryById(w http.ResponseWriter, r *http.Request) (*models.Gallery, error) {
 	vars := mux.Vars(r)
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		http.Error(w, "Invalid gallery ID", http.StatusNotFound)
-		return
+		return nil, err
 	}
-
 	gallery, err := g.gs.ByID(uint(id))
 	if err != nil {
 		switch err {
@@ -86,10 +87,65 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 		default:
 			http.Error(w, "Something went wrong", http.StatusInternalServerError)
 		}
+		return nil, err
+	}
+	return gallery, nil
+}
+
+func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryById(w, r)
+	if err != nil {
+		// galleryById will render the error
+		return
+	}
+	var vd views.Data
+	vd.Yield = gallery
+	g.ShowView.Render(w, vd)
+}
+
+func (g *Galleries) Edit(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryById(w, r)
+	if err != nil {
+		// galleryById will render the error
+		return
+	}
+	user := context.User(r.Context())
+	if user == nil || gallery.UserID != user.ID {
+		// not the owner
+		http.Error(w, "You don't have permission to edit this gallery", http.StatusForbidden)
 		return
 	}
 
 	var vd views.Data
 	vd.Yield = gallery
-	g.ShowView.Render(w, vd)
+	g.EditView.Render(w, vd)
+}
+
+func (g *Galleries) Update(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryById(w, r)
+	if err != nil {
+		// galleryById will render the error
+		return
+	}
+	user := context.User(r.Context())
+	if user == nil || gallery.UserID != user.ID {
+		// not the owner
+		http.Error(w, "Gallery not found", http.StatusNotFound)
+		return
+	}
+	var vd views.Data
+	vd.Yield = gallery
+	var form GalleryForm
+	if err := parseForm(r, &form); err != nil {
+		vd.SetAlert(err)
+		g.EditView.Render(w, vd)
+		return
+	}
+	gallery.Title = form.Title
+	// ToDo: call the db update method
+	vd.Alert = &views.Alert{
+		Level:   views.AlertLvlSuccess,
+		Message: "Gallery updated successfully!",
+	}
+	g.EditView.Render(w, vd)
 }
