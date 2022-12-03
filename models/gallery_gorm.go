@@ -12,6 +12,8 @@ type galleryGorm struct {
 	db *gorm.DB
 }
 
+var _ GalleryDB = &galleryGorm{}
+
 func (gg *galleryGorm) ByID(id uint) (*Gallery, error) {
 	var gallery Gallery
 	db := gg.db.Where("id = ?", id)
@@ -22,7 +24,15 @@ func (gg *galleryGorm) ByID(id uint) (*Gallery, error) {
 	return &gallery, nil
 }
 
-var _ GalleryDB = &galleryGorm{}
+func (gg *galleryGorm) ByUserID(id uint) ([]Gallery, error) {
+	var galleries []Gallery
+	db := gg.db.Where("user_id = ?", id)
+	err := db.Find(&galleries).Error
+	if err != nil {
+		return nil, err
+	}
+	return galleries, nil
+}
 
 func (gg *galleryGorm) Create(gallery *Gallery) error {
 	return gg.db.Create(gallery).Error
