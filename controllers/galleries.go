@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"github.com/gorilla/mux"
 	"lenslocked.com/context"
 	"lenslocked.com/models"
@@ -152,4 +153,25 @@ func (g *Galleries) Update(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	g.EditView.Render(w, vd)
+}
+
+func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
+	gallery, err := g.galleryById(w, r)
+	if err != nil {
+		return
+	}
+	user := context.User(r.Context())
+	if gallery.UserID != user.ID {
+		http.Error(w, "You do not have the permission to edit this gallery",
+			http.StatusForbidden)
+	}
+	var vd views.Data
+	err = g.gs.Delete(gallery.ID)
+	if err != nil {
+		vd.SetAlert(err)
+		vd.Yield = gallery
+		g.EditView.Render(w, vd)
+		return
+	}
+	fmt.Fprintln(w, "successfully delete")
 }

@@ -31,3 +31,8 @@ func (gg *galleryGorm) Create(gallery *Gallery) error {
 func (gg *galleryGorm) Update(gallery *Gallery) error {
 	return gg.db.Save(gallery).Error
 }
+
+func (gg *galleryGorm) Delete(id uint) error {
+	gallery := Gallery{Model: gorm.Model{ID: id}}
+	return gg.db.Delete(gallery).Error
+}
