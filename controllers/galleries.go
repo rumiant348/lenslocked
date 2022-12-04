@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"lenslocked.com/context"
 	"lenslocked.com/models"
@@ -11,7 +10,9 @@ import (
 )
 
 const (
-	ShowGallery = "show_gallery"
+	IndexGalleries = "index_galleries"
+	ShowGallery    = "show_gallery"
+	EditGallery    = "edit_gallery"
 )
 
 func NewGalleries(gs models.GalleryService, r *mux.Router) *Galleries {
@@ -175,7 +176,11 @@ func (g *Galleries) Delete(w http.ResponseWriter, r *http.Request) {
 		g.EditView.Render(w, vd)
 		return
 	}
-	fmt.Fprintln(w, "successfully delete")
+	url, err := g.r.Get(IndexGalleries).URL()
+	if err != nil {
+		http.Redirect(w, r, "/", http.StatusFound)
+	}
+	http.Redirect(w, r, url.Path, http.StatusFound)
 }
 
 func (g *Galleries) Index(w http.ResponseWriter, r *http.Request) {
