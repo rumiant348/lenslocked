@@ -45,10 +45,13 @@ func main() {
 	logging := middleware.LogRequest{}
 	// cors middleware?
 
-	// auth middleware
-	requireUserMw := middleware.RequireUser{
+	// user middleware
+	userMw := middleware.User{
 		UserService: services.User,
 	}
+	// auth middleware
+	requireUserMw := middleware.RequireUser{}
+
 	newGallery := requireUserMw.Apply(galleriesC.NewView)
 	createGallery := requireUserMw.ApplyFn(galleriesC.Create)
 	editGallery := requireUserMw.ApplyFn(galleriesC.Edit)
@@ -79,7 +82,7 @@ func main() {
 	r.Handle("/galleries", indexGallery).Methods("GET").
 		Name(controllers.IndexGalleries)
 
-	err = http.ListenAndServe(":3000", r)
+	err = http.ListenAndServe(":3000", userMw.Apply(r))
 	if err != nil {
 		panic(err)
 	}

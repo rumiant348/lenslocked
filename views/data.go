@@ -1,11 +1,15 @@
 package views
 
-import "log"
+import (
+	"lenslocked.com/models"
+	"log"
+)
 
 // Data is the top level structure that views expect data
 // to come from
 type Data struct {
 	Alert *Alert
+	User  *models.User
 	Yield interface{}
 }
 
