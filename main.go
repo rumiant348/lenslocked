@@ -58,6 +58,7 @@ func main() {
 	updateGallery := requireUserMw.ApplyFn(galleriesC.Update)
 	deleteGallery := requireUserMw.ApplyFn(galleriesC.Delete)
 	indexGallery := requireUserMw.ApplyFn(galleriesC.Index)
+	imageUpload := requireUserMw.ApplyFn(galleriesC.ImageUpload)
 
 	// Static routes
 	r.Handle("/", logging.Apply(staticC.Home)).Methods("GET")
@@ -81,6 +82,7 @@ func main() {
 	r.HandleFunc("/galleries/{id:[0-9]+}/delete", deleteGallery).Methods("POST")
 	r.Handle("/galleries", indexGallery).Methods("GET").
 		Name(controllers.IndexGalleries)
+	r.HandleFunc("/galleries/{id:[0-9]+}/images", imageUpload).Methods("POST")
 
 	err = http.ListenAndServe(":3000", userMw.Apply(r))
 	if err != nil {
