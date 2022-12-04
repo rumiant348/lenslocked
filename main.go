@@ -84,6 +84,10 @@ func main() {
 		Name(controllers.IndexGalleries)
 	r.HandleFunc("/galleries/{id:[0-9]+}/images", imageUpload).Methods("POST")
 
+	// Image routes
+	imageHandler := http.FileServer(http.Dir("./images"))
+	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
+
 	err = http.ListenAndServe(":3000", userMw.Apply(r))
 	if err != nil {
 		panic(err)
