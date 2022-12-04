@@ -39,7 +39,7 @@ func main() {
 	// controllers init
 	usersC := controllers.NewUsers(services.User)
 	staticC := controllers.NewStatic()
-	galleriesC := controllers.NewGalleries(services.Gallery, r)
+	galleriesC := controllers.NewGalleries(services.Gallery, services.Image, r)
 
 	// logging middleware?
 	logging := middleware.LogRequest{}
