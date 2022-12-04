@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"io"
 	"lenslocked.com/context"
+	"log"
 	"net/http"
 	"path/filepath"
 )
@@ -53,6 +54,7 @@ func (v *View) Render(w http.ResponseWriter, r *http.Request,
 	var buf bytes.Buffer
 	err := v.Template.ExecuteTemplate(&buf, v.Layout, vd)
 	if err != nil {
+		log.Println(err)
 		http.Error(w, "Something went wrong. If the problem "+
 			"persists, please email support@lenslocked.com",
 			http.StatusInternalServerError)
