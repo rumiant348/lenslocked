@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/handlers"
 	"lenslocked.com/controllers"
 	"lenslocked.com/middleware"
 	"lenslocked.com/models"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 )
@@ -91,7 +93,11 @@ func main() {
 	r.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete", imageDelete).
 		Methods("POST")
 
-	err = http.ListenAndServe(":3000", userMw.Apply(r))
+	err = http.ListenAndServe(":3000",
+		// log format - https://httpd.apache.org/docs/2.2/logs.html#common
+		handlers.LoggingHandler(os.Stdout, userMw.Apply(r)),
+	)
+
 	if err != nil {
 		panic(err)
 	}
