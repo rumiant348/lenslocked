@@ -109,8 +109,21 @@ func (g *Galleries) Show(w http.ResponseWriter, r *http.Request) {
 		// galleryById will render the error
 		return
 	}
+
+	owner := false
+	user := context.User(r.Context())
+	if user != nil && gallery.UserID == user.ID {
+		owner = true
+	}
+
 	var vd views.Data
-	vd.Yield = gallery
+	vd.Yield = struct {
+		Owner bool
+		*models.Gallery
+	}{
+		Owner:   owner,
+		Gallery: gallery,
+	}
 	g.ShowView.Render(w, r, vd)
 }
 

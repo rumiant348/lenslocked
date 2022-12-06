@@ -4,6 +4,9 @@
             <h1>
                 {{.Title}}
             </h1>
+            {{if .Owner }}
+                <a href="/galleries/{{.ID}}/edit">Edit</a>
+            {{end}}
             <hr>
         </div>
     </div>

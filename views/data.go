@@ -10,6 +10,7 @@ import (
 type Data struct {
 	Alert *Alert
 	User  *models.User
+	Owner bool
 	Yield interface{}
 }
 
