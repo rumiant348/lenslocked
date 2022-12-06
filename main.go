@@ -85,13 +85,20 @@ func main() {
 	r.HandleFunc("/galleries/{id:[0-9]+}/delete", deleteGallery).Methods("POST")
 	r.Handle("/galleries", indexGallery).Methods("GET").
 		Name(controllers.IndexGalleries)
-	r.HandleFunc("/galleries/{id:[0-9]+}/images", imageUpload).Methods("POST")
 
 	// Image routes
 	imageHandler := http.FileServer(http.Dir("./images"))
-	r.PathPrefix("/images/").Handler(http.StripPrefix("/images/", imageHandler))
+	imageHandler = http.StripPrefix("/images/", imageHandler)
+	r.PathPrefix("/images/").Handler(imageHandler)
+
+	r.HandleFunc("/galleries/{id:[0-9]+}/images", imageUpload).Methods("POST")
 	r.HandleFunc("/galleries/{id:[0-9]+}/images/{filename}/delete", imageDelete).
 		Methods("POST")
+
+	// Assets
+	assetHandler := http.FileServer(http.Dir("./assets"))
+	assetHandler = http.StripPrefix("/assets/", assetHandler)
+	r.PathPrefix("/assets/").Handler(assetHandler)
 
 	err = http.ListenAndServe(":3000",
 		// log format - https://httpd.apache.org/docs/2.2/logs.html#common
