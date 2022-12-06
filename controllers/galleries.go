@@ -241,6 +241,13 @@ func (g *Galleries) ImageUpload(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		file.Close()
+
+		url, err := g.r.Get(EditGallery).URL("id", fmt.Sprintf("%v", gallery.ID))
+		if err != nil {
+			// ignore
+			return
+		}
+		http.Redirect(w, r, url.Path, http.StatusFound)
 	}
 
 	vd.Alert = &views.Alert{
