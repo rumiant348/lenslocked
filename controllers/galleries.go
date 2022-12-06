@@ -224,6 +224,16 @@ func (g *Galleries) ImageUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	files := r.MultipartForm.File["images"]
+
+	if len(files) == 0 {
+		vd.Alert = &views.Alert{
+			Level:   views.AlertLvlError,
+			Message: "Select some files before clicking upload",
+		}
+		g.EditView.Render(w, r, vd)
+		return
+	}
+
 	for _, f := range files {
 		// open the target file
 		file, err := f.Open()
