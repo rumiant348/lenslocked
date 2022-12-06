@@ -4,6 +4,7 @@ import (
 	"lenslocked.com/context"
 	"lenslocked.com/models"
 	"net/http"
+	"strings"
 )
 
 // RequireUser will redirect a user to the /login page
@@ -45,6 +46,13 @@ func (mw *User) Apply(next http.Handler) http.Handler {
 
 func (mw *User) ApplyFn(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Path
+		if strings.HasPrefix(path, "/assets/") ||
+			strings.HasPrefix(path, "/images/") {
+			next(w, r)
+			return
+		}
+
 		cookie, err := r.Cookie("remember_token")
 		if err != nil {
 			next(w, r)
