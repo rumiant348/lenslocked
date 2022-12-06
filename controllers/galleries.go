@@ -71,7 +71,7 @@ func (g *Galleries) Create(w http.ResponseWriter, r *http.Request) {
 		g.NewView.Render(w, r, vd)
 		return
 	}
-	url, err := g.r.Get(ShowGallery).URL("id",
+	url, err := g.r.Get(EditGallery).URL("id",
 		strconv.Itoa(int(gallery.ID)))
 	if err != nil {
 		http.Redirect(w, r, "/", http.StatusFound)
