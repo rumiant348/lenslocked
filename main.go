@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
 	"lenslocked.com/controllers"
 	"lenslocked.com/middleware"
 	"lenslocked.com/models"
+	"lenslocked.com/rand"
 	"net/http"
 	"os"
 
@@ -100,9 +102,20 @@ func main() {
 	assetHandler = http.StripPrefix("/assets/", assetHandler)
 	r.PathPrefix("/assets/").Handler(assetHandler)
 
+	// csrfMw
+	// todo: move to config
+	isProd := false
+	key, err := rand.Bytes(32)
+	if err != nil {
+		panic(err)
+	}
+	csrfMw := csrf.Protect(key, csrf.Secure(isProd))
+
 	err = http.ListenAndServe(":3000",
-		// log format - https://httpd.apache.org/docs/2.2/logs.html#common
-		handlers.LoggingHandler(os.Stdout, userMw.Apply(r)),
+		csrfMw(
+			// log format - https://httpd.apache.org/docs/2.2/logs.html#common
+			handlers.LoggingHandler(os.Stdout, userMw.Apply(r)),
+		),
 	)
 
 	if err != nil {

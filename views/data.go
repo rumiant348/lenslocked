@@ -2,7 +2,6 @@ package views
 
 import (
 	"lenslocked.com/models"
-	"log"
 )
 
 // Data is the top level structure that views expect data
@@ -38,7 +37,6 @@ func (d *Data) SetAlert(err error) {
 	if publicError, ok := err.(PublicError); ok {
 		msg = publicError.Public()
 	} else {
-		log.Println(err)
 		msg = AlertMsgGeneric
 	}
 
