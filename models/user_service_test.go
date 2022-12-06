@@ -1,7 +1,6 @@
 package models
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -17,17 +16,22 @@ var us UserService
 var s *Services
 
 func init() {
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"dbname=%s sslmode=disable password=%s",
-		host, port, userName, dbname, password)
 
-	var err error
-	s, err = NewServices(psqlInfo)
-	if err != nil {
-		panic(err)
-	}
-	us = s.User
-	s.DestructiveReset()
+	// :(
+	//var err error
+	//s, err := NewServices(
+	//	WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
+	//	WithLogMode(!cfg.IsProd()),
+	//	WithUser(cfg.Pepper, cfg.HMACKey),
+	//	WithGallery(),
+	//	WithImage(),
+	//)
+
+	//if err != nil {
+	//	panic(err)
+	//}
+	//us = s.User
+	//s.DestructiveReset()
 }
 
 func TestUserModel(t *testing.T) {

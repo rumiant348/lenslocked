@@ -22,17 +22,18 @@ type UserService interface {
 }
 
 // UserService implementation
-
 type userService struct {
 	UserDB
+	pepper string
 }
 
-func NewUserService(db *gorm.DB) UserService {
+func NewUserService(db *gorm.DB, pepper, hmacKey string) UserService {
 	ug := &userGorm{db}
-	hmac := hash.NewHMAC(hmacSecretKey)
-	uv := newUserValidator(ug, hmac)
+	hmac := hash.NewHMAC(hmacKey)
+	uv := newUserValidator(ug, hmac, pepper)
 	return &userService{
 		UserDB: uv,
+		pepper: pepper,
 	}
 }
 
@@ -56,7 +57,7 @@ func (us *userService) Authenticate(email, password string) (*User, error) {
 
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(user.PasswordHash),
-		[]byte(password+userPwPepper))
+		[]byte(password+us.pepper))
 	switch err {
 	case nil:
 		return user, nil

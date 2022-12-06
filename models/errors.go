@@ -46,9 +46,6 @@ var (
 	// ErrRememberTooShort is returned when a remember token is
 	// not at least 32 bytes
 	ErrRememberTooShort modelError = "models: remember token is not at least 32 bytes"
-
-	userPwPepper  = "secret-secret-secret"
-	hmacSecretKey = "secret-hmac-hmacSecretKey"
 )
 
 type modelError string
@@ -65,7 +62,5 @@ func (e modelError) Public() string {
 }
 
 func Title(s string) string {
-	//runes := []rune(s)
-	//return strings.ToUpper(string(runes[0])) + string(runes[1:])
 	return cases.Title(language.English, cases.Compact).String(s)
 }

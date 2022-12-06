@@ -10,10 +10,11 @@ import (
 
 // Validator
 
-func newUserValidator(db UserDB, hmac hash.HMAC) *userValidator {
+func newUserValidator(db UserDB, hmac hash.HMAC, pepper string) *userValidator {
 	return &userValidator{
 		UserDB:     db,
 		hmac:       hmac,
+		pepper:     pepper,
 		emailRegex: regexp.MustCompile(`^[a-z0-9._%+\-]+@[a-z0-9.\-].+\.[a-z]{2,16}$`),
 	}
 }
@@ -24,6 +25,7 @@ func newUserValidator(db UserDB, hmac hash.HMAC) *userValidator {
 type userValidator struct {
 	UserDB
 	hmac       hash.HMAC
+	pepper     string
 	emailRegex *regexp.Regexp
 }
 
@@ -202,7 +204,7 @@ func (uv *userValidator) bcryptPassword(user *User) error {
 	if user.Password == "" {
 		return nil
 	}
-	pwBytes := []byte(user.Password + userPwPepper)
+	pwBytes := []byte(user.Password + uv.pepper)
 	hashedBytes, err := bcrypt.GenerateFromPassword(pwBytes, bcrypt.DefaultCost)
 	if err != nil {
 		return err

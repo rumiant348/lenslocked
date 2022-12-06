@@ -14,28 +14,21 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const (
-	host     = "localhost"
-	port     = 5432
-	userName = "aru"
-	password = ""
-	dbname   = "lenslocked_dev"
-)
-
 func main() {
-	// db init
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-		"dbname=%s sslmode=disable password=%s",
-		host, port, userName, dbname, password)
-
-	//us, err := models.NewUserService(psqlInfo)
-	services, err := models.NewServices(psqlInfo)
+	cfg := DefaultConfig()
+	dbCfg := DefaultPostgresConfigDev()
+	services, err := models.NewServices(
+		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
+		models.WithLogMode(!cfg.IsProd()),
+		models.WithUser(cfg.Pepper, cfg.HMACKey),
+		models.WithGallery(),
+		models.WithImage(),
+	)
 	if err != nil {
 		panic(err)
 	}
 	defer services.Close()
 	services.AutoMigrate()
-	//services.DestructiveReset()
 
 	// router init
 	r := mux.NewRouter()
@@ -103,15 +96,14 @@ func main() {
 	r.PathPrefix("/assets/").Handler(assetHandler)
 
 	// csrfMw
-	// todo: move to config
-	isProd := false
 	key, err := rand.Bytes(32)
 	if err != nil {
 		panic(err)
 	}
-	csrfMw := csrf.Protect(key, csrf.Secure(isProd))
+	csrfMw := csrf.Protect(key, csrf.Secure(cfg.IsProd()))
 
-	err = http.ListenAndServe(":3000",
+	fmt.Printf("Starting the server on :%d...\n", cfg.Port)
+	err = http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port),
 		csrfMw(
 			// log format - https://httpd.apache.org/docs/2.2/logs.html#common
 			handlers.LoggingHandler(os.Stdout, userMw.Apply(r)),
