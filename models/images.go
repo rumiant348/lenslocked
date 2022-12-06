@@ -10,6 +10,7 @@ import (
 type ImageService interface {
 	Create(galleryID uint, r io.Reader, filename string) error
 	ByGalleryID(galleryID uint) ([]Image, error)
+	Delete(i *Image) error
 }
 
 func NewImageService() ImageService {
@@ -53,6 +54,10 @@ func (is *imageService) ByGalleryID(galleryID uint) ([]Image, error) {
 	return ret, err
 }
 
+func (is *imageService) Delete(i *Image) error {
+	return os.Remove(i.RelativePath())
+}
+
 func (is *imageService) mkImageDir(galleryID uint) (string, error) {
 	galleryPath := is.imageDir(galleryID)
 	err := os.MkdirAll(galleryPath, 0755)
@@ -71,8 +76,8 @@ func (is *imageService) imageDir(galleryID uint) string {
 // Image is not stored in the db, and instead
 // references data stored on disk.
 type Image struct {
-	GalleryID uint
 	Filename  string
+	GalleryID uint
 }
 
 // Path is used to build the absolute path used to reference this image
