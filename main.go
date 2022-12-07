@@ -15,8 +15,8 @@ import (
 )
 
 func main() {
-	cfg := DefaultConfig()
-	dbCfg := DefaultPostgresConfigDev()
+	cfg := LoadConfig()
+	dbCfg := cfg.Database
 	services, err := models.NewServices(
 		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
 		models.WithLogMode(!cfg.IsProd()),
