@@ -4,9 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 )
 
-type PostgresConfig struct {
+type PostgresConfig interface {
+	Dialect() string
+	ConnectionInfo() string
+}
+
+type postgresConfig struct {
 	Host     string `json:"host"`
 	Port     int    `json:"port"`
 	User     string `json:"user"`
@@ -14,16 +20,11 @@ type PostgresConfig struct {
 	Name     string `json:"name"`
 }
 
-func (c PostgresConfig) Dialect() string {
+func (c postgresConfig) Dialect() string {
 	return "postgres"
 }
 
-// previously was
-//  	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s "+
-//		"dbname=%s sslmode=disable password=%s",
-//		host, port, userName, dbname, password)
-
-func (c PostgresConfig) ConnectionInfo() string {
+func (c postgresConfig) ConnectionInfo() string {
 	if c.Password == "" {
 		return fmt.Sprintf("host=%s port=%d user=%s "+
 			"dbname=%s sslmode=disable",
@@ -34,8 +35,23 @@ func (c PostgresConfig) ConnectionInfo() string {
 		c.Host, c.Port, c.User, c.Name, c.Password)
 }
 
+type envPostgresConfig struct {
+}
+
+func (c envPostgresConfig) Dialect() string {
+	return "postgres"
+}
+
+func (c envPostgresConfig) ConnectionInfo() string {
+	connectionInfo := os.Getenv("DATABASE_URL")
+	if connectionInfo == "" {
+		panic("Empty env var DATABASE_URL")
+	}
+	return connectionInfo
+}
+
 func DefaultPostgresConfigDev() PostgresConfig {
-	return PostgresConfig{
+	return postgresConfig{
 		Host:     "localhost",
 		Port:     5432,
 		User:     "aru",
@@ -45,7 +61,7 @@ func DefaultPostgresConfigDev() PostgresConfig {
 }
 
 func DefaultPostgresConfigTest() PostgresConfig {
-	return PostgresConfig{
+	return postgresConfig{
 		Host:     "localhost",
 		Port:     5432,
 		User:     "aru",
@@ -76,12 +92,14 @@ func DefaultConfig() Config {
 	}
 }
 
-func LoadConfig(configReq bool) Config {
+func LoadConfig(isProd bool) Config {
+
+	if isProd {
+		return loadConfigProd()
+	}
+
 	f, err := os.Open(".config.json")
 	if err != nil {
-		if configReq {
-			panic(err)
-		}
 		fmt.Println("Using the default config")
 		return DefaultConfig()
 	}
@@ -93,4 +111,18 @@ func LoadConfig(configReq bool) Config {
 	}
 	fmt.Println("Successfully loaded .config.json")
 	return c
+}
+
+func loadConfigProd() Config {
+	port, err := strconv.Atoi(os.Getenv("port"))
+	if err != nil {
+		panic(err)
+	}
+	return Config{
+		Port:     port,
+		Env:      os.Getenv("env"),
+		Pepper:   os.Getenv("pepper"),
+		HMACKey:  os.Getenv("hmac_key"),
+		Database: envPostgresConfig{},
+	}
 }

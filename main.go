@@ -19,14 +19,13 @@ import (
 func main() {
 	var isProd bool
 	var err error
-	prodStr := os.Getenv("PROD")
+	prodStr := os.Getenv("prod")
 	if prodStr != "" {
 		isProd, err = strconv.ParseBool(prodStr)
 		if err != nil {
 			panic(err)
 		}
 		log.Println("Running in prod env")
-
 	}
 
 	cfg := LoadConfig(isProd)
