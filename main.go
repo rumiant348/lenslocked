@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
@@ -9,19 +8,28 @@ import (
 	"lenslocked.com/middleware"
 	"lenslocked.com/models"
 	"lenslocked.com/rand"
+	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
 func main() {
+	var isProd bool
+	var err error
+	prodStr := os.Getenv("PROD")
+	if prodStr != "" {
+		isProd, err = strconv.ParseBool(prodStr)
+		if err != nil {
+			panic(err)
+		}
+		log.Println("Running in prod env")
 
-	boolPtr := flag.Bool("prod", false, "Provide this flag in production. "+
-		"This ensures that a .config file is provided before the application starts")
-	flag.Parse()
+	}
 
-	cfg := LoadConfig(*boolPtr)
+	cfg := LoadConfig(isProd)
 	dbCfg := cfg.Database
 	services, err := models.NewServices(
 		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
