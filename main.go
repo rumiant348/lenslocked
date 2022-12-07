@@ -36,7 +36,7 @@ func main() {
 	fmt.Println("current dir ", ep)
 	printFiles(filepath.Dir(ep))
 	fmt.Println("views")
-	printFiles(filepath.Join(filepath.Dir(ep), "lenslocked.com", "views"))
+	printFiles(filepath.Join(filepath.Dir(ep), "views"))
 
 	cfg := config.GetConfig()
 

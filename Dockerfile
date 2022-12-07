@@ -6,9 +6,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -v -o app
 FROM alpine:latest
 COPY --from=builder /go/src/app/app /goapp/app
 WORKDIR /goapp
-COPY . /throwaway
-RUN cp -r /throwaway/views ./views || echo "No resources to copy"
-RUN rm -rf /throwaway
+COPY ./views /goapp/views
+COPY ./assets /goapp/assets
 RUN apk --no-cache add ca-certificates
 ENV PORT=8080
 EXPOSE 8080
