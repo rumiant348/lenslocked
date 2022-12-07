@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
+	"lenslocked.com/config"
 	"lenslocked.com/controllers"
 	"lenslocked.com/middleware"
 	"lenslocked.com/models"
@@ -11,27 +12,36 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"strconv"
+	"path/filepath"
 
 	"github.com/gorilla/mux"
 )
 
-func main() {
-	var isProd bool
-	var err error
-	prodStr := os.Getenv("prod")
-	if prodStr != "" {
-		isProd, err = strconv.ParseBool(prodStr)
-		if err != nil {
-			panic(err)
-		}
-		log.Println("Running in prod env")
+func printFiles(path string) {
+	files, err := os.ReadDir(path)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	cfg := LoadConfig(isProd)
-	dbCfg := cfg.Database
+	for _, file := range files {
+		fmt.Println(file.Name(), file.IsDir())
+	}
+}
+
+func main() {
+	ep, err := os.Executable()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("current dir ", ep)
+	printFiles(filepath.Dir(ep))
+	fmt.Println("views")
+	printFiles(filepath.Join(filepath.Dir(ep), "lenslocked.com", "views"))
+
+	cfg := config.GetConfig()
+
 	services, err := models.NewServices(
-		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
+		models.WithGorm(cfg.Dialect(), cfg.ConnectionInfo()),
 		models.WithLogMode(!cfg.IsProd()),
 		models.WithUser(cfg.Pepper, cfg.HMACKey),
 		models.WithGallery(),

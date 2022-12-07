@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/csrf"
 	"html/template"
 	"io"
+	"lenslocked.com/config"
 	"lenslocked.com/context"
 	"log"
 	"net/http"
@@ -20,6 +21,12 @@ var (
 )
 
 func NewView(layout string, files ...string) *View {
+	conf := config.GetConfig()
+	if conf.IsProd() {
+		TemplateDir = filepath.Join("lenslocked.com", TemplateDir)
+		LayoutDir = filepath.Join("lenslocked.com", LayoutDir)
+	}
+
 	addTemplatePath(files)
 	addTemplateExt(files)
 	files = append(files, getLayoutFiles()...)

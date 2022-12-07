@@ -1,8 +1,6 @@
 package controllers
 
-import (
-	"lenslocked.com/views"
-)
+import "lenslocked.com/views"
 
 func NewStatic() *Static {
 	return &Static{
