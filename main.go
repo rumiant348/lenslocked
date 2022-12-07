@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/gorilla/csrf"
 	"github.com/gorilla/handlers"
@@ -15,7 +16,12 @@ import (
 )
 
 func main() {
-	cfg := LoadConfig()
+
+	boolPtr := flag.Bool("prod", false, "Provide this flag in production. "+
+		"This ensures that a .config file is provided before the application starts")
+	flag.Parse()
+
+	cfg := LoadConfig(*boolPtr)
 	dbCfg := cfg.Database
 	services, err := models.NewServices(
 		models.WithGorm(dbCfg.Dialect(), dbCfg.ConnectionInfo()),
